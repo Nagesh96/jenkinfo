@@ -1,0 +1,112 @@
+pipeline {
+    agent any
+        parameters {
+        string(name: 'TARGET_BRANCH', defaultValue: "", description: 'Please enter the branch name')
+    }
+
+    tools {
+        jdk "java-11"
+        maven "maven"
+    }
+    stages {
+
+        stage('Set TIMESTAMP'){
+            steps {
+                script {
+                    env.TIMESTAMP = sh(script: 'date +"%m-%d-%Y-%H%M"', returnStdout: true).trim()
+                    echo "TIMESTAMP: ${env.TIMESTAMP}"
+                }
+            }
+        }
+
+        stage ('Validate Inputs') {
+            steps {
+                echo "USER INPUT: -----"
+                echo "GIT Branch: ${params.TARGET_BRANCH}"
+                echo "Checking whether mandatory parameters are provided or not.!"
+                // sh "printenv"
+                script {
+                    try {
+                        if ( params.BRANCH ==~ "" ) {
+                            sh '''
+                                echo "Mandatory parameter GIT branch is missing, so can't proceed with other stages without knowing the code branch from which deployment code have to be checkedout..!"
+                                exit 1
+                            '''
+                        }
+                    } catch (err) {
+                        echo "Input validation failed.!"
+                        currentBuild.result = 'UNSTABLE'
+                    }
+                }
+            }
+        }   
+
+        stage('Checkout') {
+            steps {
+                git branch: '$TARGET_BRANCH', credentialsId: 'git-cred', url: 'https://github.com/Nagesh96/addressbook.git'
+            }
+        }
+        
+        stage('Build') {
+            steps {
+                sh 'mvn clean package'
+            }
+        }
+        
+        stage('Tagging') {
+            steps {
+                script {
+                    def BRANCH_NAME = "${params.TARGET_BRANCH}"
+                    TAG_NAME = "${BRANCH_NAME}-BUILD-${BUILD_NUMBER}-${env.TIMESTAMP}"
+                    sh "echo TAG_NAME=${TAG_NAME}"
+                    sh "echo TAG_NAME=${TAG_NAME} > Tagfile.properties"
+                    env.TAG_NAME = TAG_NAME
+                }
+            }
+        }
+        
+        stage ('Upload artifacts to JFrog Repo') {
+            steps {
+                echo 'Publishing Artifacts'
+                script {
+                    //env.JAVA_HOME="${tool 'JDK 1.8.162'}"
+                    def server = Artifactory.server('Artifactory')
+                    def rtMaven = Artifactory.newMavenBuild()
+                    def uploadSpec = """
+                    {
+                        "files":[
+                            {
+                                "pattern" : "*.war",
+                                "target": "libs-release-local"
+                            }
+                        ]
+                    }
+                    """
+                    //server.upload spec:uploadSpec, buildInfo:rtMaven
+                    //rtMaven = Artifactory.newMavenBuild()
+                    //rtMaven.properties = [['key':'TAG_NAME', 'value':env.TAG_NAME]]
+                    def buildInfo = server.upload(uploadSpec)
+                    //server.publishBuildInfo rtMaven
+                }
+            }
+        }
+        
+        stage ('Upload build info to artifactory') {
+            steps {
+                script {
+                    def server = Artifactory.server('Artifactory')
+                    buildInfo = Artifactory.newBuildInfo()
+                    buildInfo.env.capture = true
+                    sh "echo TAG_NAME=${TAG_NAME}"
+                    buildInfo.extra = [
+                        TAG_NAME: env.TAG_NAME
+                    ]
+                    //buildInfo.env.TAG_NAME = env.TAG_NAME
+                    //buildInfo.env.additionalBuildInfo['JIRA_TICKET'] = params.JIRA_TICKET
+                    server.publishBuildInfo buildInfo
+                }
+            }
+        }
+
+    }
+}
