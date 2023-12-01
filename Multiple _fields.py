@@ -17,7 +17,7 @@ def update_issue_fields(username, password, issue_key, fields_dict):
         print(f"Failed to update the fields. Error:", str(e))
 
 # Ensure the correct number of arguments is provided
-if len(sys.argv) < 7:
+if len(sys.argv) < 7 or (len(sys.argv) - 1) % 2 != 0:
     print("Usage: python jira_up_arg.py JIRA_TICKET=<issue_key> ENVIRONMENT=<environment> COMMENT=<comment> USERNAME=<username> PASSWORD=<password> FieldID1=<field_id_1> NewValue1=<new_value_1> [FieldID2=<field_id_2> NewValue2=<new_value_2> ...]")
     sys.exit(1)
 
