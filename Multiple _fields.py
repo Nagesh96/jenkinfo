@@ -19,15 +19,18 @@ def update_issue_fields(username, password, issue_key, fields_dict):
     except Exception as e:
         print("Failed to update the fields. Error:", str(e))
 
-# Check if the correct number of arguments is provided
-if len(sys.argv) % 2 != 1 or len(sys.argv) < 10:
-    print("Usage: python jira_up_arg.py JIRA_TICKET <issue_key> ENVIRONMENT <environment> COMMENT <comment> USERNAME <username> PASSWORD <password> [FieldName1=new_value1 FieldName2=new_value2 ...]")
+# Check if correct number of arguments is provided
+if len(sys.argv) < 2:
+    print("Usage: python jira_up_arg.py JIRA_TICKET=<issue_key> ENVIRONMENT=<environment> COMMENT=<comment> USERNAME=<username> PASSWORD=<password> [FieldName1=<new_value1> FieldName2=<new_value2> ...]")
     sys.exit(1)
 
 # Parse key-value pairs from command line arguments
-args = dict(zip(sys.argv[1::2], sys.argv[2::2]))
+args = {}
+for arg in sys.argv[1:]:
+    key, value = arg.split('=')
+    args[key] = value
 
-# Retrieve the JIRA ticket, environment, and comment from the arguments
+# Retrieve necessary values from arguments
 issue_key = args.get("JIRA_TICKET")
 environment = args.get("ENVIRONMENT")
 comment = args.get("COMMENT")
@@ -39,10 +42,7 @@ if not issue_key or not environment or not comment or not jira_username or not j
     print("Please provide 'JIRA_TICKET', 'ENVIRONMENT', 'COMMENT', 'USERNAME', and 'PASSWORD'")
     sys.exit(1)
 
-fields_dict = {}
-for key, value in args.items():
-    if key not in ["JIRA_TICKET", "ENVIRONMENT", "COMMENT", "USERNAME", "PASSWORD"]:
-        fields_dict[key] = value
+fields_dict = {key: value for key, value in args.items() if key not in ["JIRA_TICKET", "ENVIRONMENT", "COMMENT", "USERNAME", "PASSWORD"]}
 
 try:
     # Map environment names to JIRA status
