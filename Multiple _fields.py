@@ -73,3 +73,13 @@ try:
         print(f"Environment '{environment}' not found in the mapping")
 except Exception as e:
     print(f"An error occurred: {str(e)}")
+
+
+
+
+
+
+# Ensure the correct number of mandatory arguments is provided
+if len(sys.argv) < 6 or not all(arg.startswith(('JIRA_TICKET=', 'ENVIRONMENT=', 'COMMENT=', 'USERNAME=', 'PASSWORD=')) for arg in sys.argv[1:]):
+    print("Usage: python jira_up_arg.py JIRA_TICKET=<issue_key> ENVIRONMENT=<environment> COMMENT=<comment> USERNAME=<username> PASSWORD=<password> [FieldID1=<field_id_1> NewValue1=<new_value_1> FieldID2=<field_id_2> NewValue2=<new_value_2> ...]")
+    sys.exit(1)
