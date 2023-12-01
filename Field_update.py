@@ -17,12 +17,16 @@ def update_issue_field(username, password, issue_key, field_id, new_value):
         print(f"Failed to update the field '{field_id}'. Error:", str(e))
 
 # Ensure the correct number of arguments is provided
-if len(sys.argv) % 2 != 1 or len(sys.argv) < 12:
-    print("Usage: python jira_up_arg.py JIRA_TICKET <issue_key> ENVIRONMENT <environment> COMMENT <comment> USERNAME <username> PASSWORD <password> FieldID <field_id> NewValue <new_value>")
+if len(sys.argv) < 7:
+    print("Usage: python jira_up_arg.py JIRA_TICKET=<issue_key> ENVIRONMENT=<environment> COMMENT=<comment> USERNAME=<username> PASSWORD=<password> FieldID=<field_id> NewValue=<new_value>")
     sys.exit(1)
 
 # Parse key-value pairs from command line arguments
-args = dict(zip(sys.argv[1::2], sys.argv[2::2]))
+args = {}
+for arg in sys.argv[1:]:
+    key_value = arg.split('=')
+    if len(key_value) == 2:
+        args[key_value[0]] = key_value[1]
 
 # Retrieve the JIRA ticket, environment, comment, username, password, field ID, and field value from the arguments
 issue_key = args.get("JIRA_TICKET")
