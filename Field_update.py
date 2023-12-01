@@ -16,12 +16,27 @@ def update_issue_field(username, password, issue_key, field_id, new_value):
     except Exception as e:
         print(f"Failed to update the field '{field_id}'. Error:", str(e))
 
-# The existing code you provided remains unchanged
+# Ensure the correct number of arguments is provided
+if len(sys.argv) % 2 != 1 or len(sys.argv) < 10:
+    print("Usage: python jira_up_arg.py JIRA_TICKET <issue_key> ENVIRONMENT <environment> COMMENT <comment> USERNAME <username> PASSWORD <password> ")
+    sys.exit(1)
+
+# Parse key-value pairs from command line arguments
+args = dict(zip(sys.argv[1::2], sys.argv[2::2]))
+
+# Retrieve the JIRA ticket, environment, and comment from the arguments
+issue_key = args.get("JIRA_TICKET")
+environment = args.get("ENVIRONMENT")
+comment = args.get("COMMENT")
+jira_username = args.get("USERNAME")
+jira_password = args.get("PASSWORD")
 
 # Ensure required arguments are provided
 if not issue_key or not environment or not comment or not jira_username or not jira_password:
     print("Please provide 'JIRA_TICKET', 'ENVIRONMENT', 'COMMENT', 'USERNAME', and 'PASSWORD'")
     sys.exit(1)
+
+jira_url = "https://jira.charter.com"
 
 # Map environment names to JIRA status
 status_mapping = {
